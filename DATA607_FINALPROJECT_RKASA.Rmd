@@ -1,0 +1,379 @@
+---
+title: "DATA607 - Final Project - World Happiness Report"
+author:"Renida Kasa"
+output: html_document
+date: "2023-12-05"
+---
+## Abstract
+
+The World Happiness Report measures global happiness through surveys collected by the Gallup World Poll. Answers are collected based on a Cantril ladder life question. Participants are asked to think of lifestyles on a ladder, with their ideal and best possible life being at a 10, or the top of the ladder, and their worst possible life at a 0, or the very bottom of the ladder. They are then asked to rate their own lives on this scale along with seven main observed factors that may contribute to their responses. These seven factors are: economic production, social support, life expectancy, freedom, perceptions of corruption, generosity, and positive and negative affect. This dataset features data collected from 2013-2016. For the purpose of this project, I decided to focus on the most recent data collected, 2018.
+
+Happiness records are significant in recognizing the emotional and mental wellbeing of groups of people, and can, therefore, be used to make informed decisions on a governmental and organizational level to help improve quality of life for the general population. These reports can also be used to assess international progression. With this dataset, we can look at world happiness and use a variety of factors, such as social support and finances, to evaluate their potential impact on happiness. 
+Kaggle Link for Dataset: https://www.kaggle.com/datasets/unsdsn/world-happiness/
+
+### Data Collection Method
+This data was collected in the form of surveys through a poll, mkaing it an observational study.
+
+### Variables
+
+Dependent Variable: Happiness score (Cantril Ladder Life question score)
+
+Independent Variable: seven explanatory variables
+- Per Capita Income (Log GDP per capita)
+- Social support
+- Healthy Life expectancy (Healthy life expectancy at birth)
+- Freedom of Choice (Freedom to make life choices)
+- Generosity 
+- Perceived corruption (Perceptions of corruption)
+- Positive and Negative affect
+
+## Research Question
+
+What factors are significant predictors of people's happiness? 
+
+### Hypotheses
+
+##### Null Hypothesis: None of the seven explanatory variables have a significant impact on people's happiness score as measured by the Cantril ladder life question.
+
+This null hypothesis assumes that there is no relationship or predictive power between the independent variables (the seven explanatory variables) and the dependent variable (happiness score). 
+
+##### Alternative Hypothesis: At least one of the seven explanatory variables has a significant impact on people's happiness score as measured by the Cantril ladder life question.
+
+This alternative hypothesis suggests that there is a relationship between at least one of the explanatory variables and the happiness score.
+
+## Data Exploration
+```{r}
+library(readr)
+url1 <- "https://raw.githubusercontent.com/renidak01/DATA607_FINALPROJECT/main/world-happiness-report.csv"
+df1 <- read.csv(url1)
+cat("Variables in df1:\n") #df1 variables
+print(names(df1))
+```
+I began by reading the csv file for the data collected in the world happiness report. I wanted to take a look at the variable names so that I could start changing some of them, and so that I could see what variables I was working with and what needed to be kept or changed. 
+
+```{r}
+nrow(df1)
+```
+ 
+Here we see that there are 1949 observations in this dataset. We will need to filter out all of the years except for the year which we will be working with. 
+
+## Data Wrangling/Cleaning
+
+```{r}
+library(dplyr)
+
+df1 <- df1 %>%
+  rename(Country = Country.name,
+         Year = year,
+         `Healthy.Life.Expectancy` = Healthy.life.expectancy.at.birth,
+         `Freedom.of.Choice` = Freedom.to.make.life.choices,
+         `Perceived.Corruption` = Perceptions.of.corruption,
+         'Per.Capita.Income'=Log.GDP.per.capita,
+         'Social.Support'=Social.support,
+         'Negative.Affect'=Negative.affect,
+         'Positive.Affect'=Positive.affect)
+
+print(names(df1))
+```
+
+
+
+I started by renaming the variables to make them easier to work with. I did this using dplyr's pipe operator, for the purpose of efficiency and to keep the data more concise. 
+
+### Global Summary statistics from the World Happiness Report:
+```{r}
+print(summary(df1))
+```
+Here I noticed that there is some missing data, so I decided to filter those out before analyzing the summary statistics. 
+
+### Handling Missing Data
+```{r}
+library(dplyr)
+df1 <- df1 %>%
+  filter(!is.na(Per.Capita.Income),
+         !is.na(Social.Support),
+         !is.na(Healthy.Life.Expectancy),
+         !is.na(Freedom.of.Choice),
+         !is.na(Generosity),
+         !is.na(Perceived.Corruption),
+         !is.na(Positive.Affect),
+         !is.na(Negative.Affect )
+         )
+
+print(summary(df1))
+```
+
+### Summary statistics from the World Happiness Report (2018):
+```{r}
+df_2018 <- df1 %>%
+  filter(Year == 2018)
+
+print(summary(df_2018))
+```
+
+I have also only used the data from the year 2018, and have filtered out the rest. Here we can see some summary statistics. This is not too useful to us yet, as these are global statistics, meaning that they are not specific to a given country. This can, however, give us an idea about the emotional and psychological state of the world in general. For example, we see that the global average life expectancy is about 64.52 years old, with the minimum average life expectancy being 48.20 years old, and the maximum average life expectancy being 76.80. Because these are global statistics, it is unclear which country these extremes belong to.  
+
+### World Happiness Report (2018) Dataframe:
+```{r}
+head(df_2018[, !names(df_2018) %in% "Year"])
+```
+
+I decided to display the first few rows from the dataframe of this dataset as well. I removed the year column to avoid redundancy and save space, as we have already established that we are only working with 2018 data.
+
+## Data Visualization
+
+### Average Life Ladder Score by Country
+```{r}
+average_scores <- df_2018 %>%
+  group_by(Country) %>%
+  summarize(Average_Life_Ladder = mean(Life.Ladder, na.rm = TRUE)) %>%
+  arrange(desc(Average_Life_Ladder))  # Arrange in descending order of scores
+
+ggplot(average_scores, aes(x = reorder(Country, Average_Life_Ladder), y = Average_Life_Ladder)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  labs(x = "Country Name", y = "Average Life Ladder Score") +
+  ggtitle("Average Life Ladder Score by Country") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+
+```
+```{r}
+lowest_ll_score <- average_scores %>% arrange(Average_Life_Ladder) %>% head(1)
+
+highest_ll_score <- average_scores %>% arrange(desc(Average_Life_Ladder)) %>% head(1)
+
+print(lowest_ll_score)
+print(highest_ll_score)
+```
+
+
+
+### Average Per Capita Income by Country
+```{r}
+average_scores <- df_2018 %>%
+  group_by(Country) %>%
+  summarize(Average_Log.GDP.per.capita = mean(Per.Capita.Income, na.rm = TRUE)) %>%
+  arrange(desc(Average_Log.GDP.per.capita))  # Arrange in descending order of scores
+
+ggplot(average_scores, aes(x = reorder(Country, Average_Log.GDP.per.capita), y = Average_Log.GDP.per.capita)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  labs(x = "Country Name", y = "Average Per Capita Income") +
+  ggtitle("Average Per Capita Income by Country") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+
+```
+```{r}
+lowest_gdp <- average_scores %>% arrange(Average_Log.GDP.per.capita) %>% head(1)
+
+highest_gdp <- average_scores %>% arrange(desc(Average_Log.GDP.per.capita)) %>% head(1)
+
+print(lowest_gdp)
+print(highest_gdp)
+```
+
+
+### Average Social Support by Country
+```{r}
+average_scores <- df_2018 %>%
+  group_by(Country) %>%
+  summarize(Average_Social.support = mean(Social.Support, na.rm = TRUE)) %>%
+  arrange(desc(Average_Social.support))  # Arrange in descending order of scores
+
+ggplot(average_scores, aes(x = reorder(Country, Average_Social.support), y = Average_Social.support)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  labs(x = "Country Name", y = "Average Social Support Score") +
+  ggtitle("Average Social Support Score by Country") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+
+```
+```{r}
+lowest_ss <- average_scores %>% arrange(Average_Social.support) %>% head(1)
+
+highest_ss <- average_scores %>% arrange(desc(Average_Social.support)) %>% head(1)
+
+print(lowest_ss)
+print(highest_ss)
+```
+
+
+
+### Average Healthy Life Expectancy by Country
+```{r}
+average_scores <- df_2018 %>%
+  group_by(Country) %>%
+  summarize(Average_Healthy.Life.Expectancy = mean(Healthy.Life.Expectancy, na.rm = TRUE)) %>%
+  arrange(desc(Average_Healthy.Life.Expectancy))  # Arrange in descending order of scores
+
+ggplot(average_scores, aes(x = reorder(Country, Average_Healthy.Life.Expectancy), y = Average_Healthy.Life.Expectancy)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  labs(x = "Country Name", y = "Average Healthy Life Expectancy") +
+  ggtitle("Average Healthy Life Expectancy by Country") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+
+```
+
+```{r}
+lowest_le <- average_scores %>% arrange(Average_Healthy.Life.Expectancy) %>% head(1)
+
+highest_le <- average_scores %>% arrange(desc(Average_Healthy.Life.Expectancy)) %>% head(1)
+
+print(lowest_le)
+print(highest_le)
+```
+
+### Average Freedom of Choice Score by Country
+```{r}
+average_scores <- df_2018 %>%
+  group_by(Country) %>%
+  summarize(Average_Freedom.of.Choice  = mean(Freedom.of.Choice, na.rm = TRUE)) %>%
+  arrange(desc(Average_Freedom.of.Choice))  # Arrange in descending order of scores
+
+ggplot(average_scores, aes(x = reorder(Country, Average_Freedom.of.Choice), y = Average_Freedom.of.Choice)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  labs(x = "Country Name", y = "Average Freedom of Choice Score") +
+  ggtitle("Average Freedom of Choice Score by Country") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+```
+
+```{r}
+lowest_foc <- average_scores %>% arrange(Average_Freedom.of.Choice) %>% head(1)
+
+highest_foc <- average_scores %>% arrange(desc(Average_Freedom.of.Choice)) %>% head(1)
+
+print(lowest_foc)
+print(highest_foc)
+```
+
+### Average Generosity by Country
+
+```{r}
+average_scores <- df_2018 %>%
+  group_by(Country) %>%
+  summarize(Average_Generosity  = mean( Generosity, na.rm = TRUE)) %>%
+  arrange(desc(Average_Generosity))  # Arrange in descending order of scores
+
+ggplot(average_scores, aes(x = reorder(Country, Average_Generosity), y = Average_Generosity)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  labs(x = "Country Name", y = "Average Generosity") +
+  ggtitle("Average Generosity by Country") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+```
+
+```{r}
+lowest_gen <- average_scores %>% arrange(Average_Generosity) %>% head(1)
+
+highest_gen <- average_scores %>% arrange(desc(Average_Generosity)) %>% head(1)
+
+print(lowest_gen)
+print(highest_gen)
+```
+
+
+### Average Perceived Corruption by Country
+
+```{r}
+average_scores <- df_2018 %>%
+  group_by(Country) %>%
+  summarize(Average_Perceived.Corruption  = mean(Perceived.Corruption, na.rm = TRUE)) %>%
+  arrange(desc(Average_Perceived.Corruption))  # Arrange in descending order of scores
+
+ggplot(average_scores, aes(x = reorder(Country, Average_Perceived.Corruption), y = Average_Perceived.Corruption)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  labs(x = "Country Name", y = "Average Perceived Corruption") +
+  ggtitle("Average Perceived Corruption by Country") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+```
+```{r}
+lowest_percor <- average_scores %>% arrange(Average_Perceived.Corruption) %>% head(1)
+
+highest_percor <- average_scores %>% arrange(desc(Average_Perceived.Corruption)) %>% head(1)
+
+print(lowest_percor)
+print(highest_percor)
+```
+
+### Average Positive Affect by Country
+
+```{r}
+average_scores <- df_2018 %>%
+  group_by(Country) %>%
+  summarize(Average_Positive.Affect  = mean(Positive.Affect, na.rm = TRUE)) %>%
+  arrange(desc(Average_Positive.Affect))  # Arrange in descending order of scores
+
+ggplot(average_scores, aes(x = reorder(Country, Average_Positive.Affect), y = Average_Positive.Affect)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  labs(x = "Country Name", y = "Average Positive Affect") +
+  ggtitle("Average Positive Affect by Country") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+```
+```{r}
+lowest_posaff <- average_scores %>% arrange(Average_Positive.Affect) %>% head(1)
+
+highest_posaff <- average_scores %>% arrange(desc(Average_Positive.Affect)) %>% head(1)
+
+print(lowest_posaff)
+print(highest_posaff)
+```
+
+### Average Negative Affect by Country
+
+```{r}
+average_scores <- df_2018 %>%
+  group_by(Country) %>%
+  summarize(Average_Negative.Affect  = mean(Negative.Affect, na.rm = TRUE)) %>%
+  arrange(desc(Average_Negative.Affect))  # Arrange in descending order of scores
+
+ggplot(average_scores, aes(x = reorder(Country, Average_Negative.Affect), y = Average_Negative.Affect)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  labs(x = "Country Name", y = "Average Negative Affect") +
+  ggtitle("Average Negative Affect by Country") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+```
+```{r}
+lowest_negaff <- average_scores %>% arrange(Average_Negative.Affect) %>% head(1)
+
+highest_negaff <- average_scores %>% arrange(desc(Average_Negative.Affect)) %>% head(1)
+
+print(lowest_negaff)
+print(highest_negaff)
+```
+
+## Analysis 
+
+Then I will do some calculations to find which variable has the strongest impact on happiness. Out of curiosity, I would also like to know which one has the least
+
+```{r}
+model <- lm(Life.Ladder ~ Per.Capita.Income + Social.Support + Healthy.Life.Expectancy +
+               Freedom.of.Choice + Generosity + Perceived.Corruption + Positive.Affect + Negative.Affect,
+            data = df_2018)
+
+summary(model)
+```
+
+Overall, based on the coefficients' significance levels and the model's R-squared value, it seems that Per.Capita.Income, Social.Support, Healthy.Life.Expectancy, Perceived.Corruption, and Positive and Negative Affect are statistically significant predictors of the Life Ladder score in this model. I was surprised to see that healthy life expectancy did not have as significant of an impact as I would have thought.Generosity and Freedom.of.Choice on the other hand, do not appear to have a statistically significant impact. It looks like economic production however, was the most significant factor contribution to overall happiness.
+
+Because of the multiple r-squared value, 0.7605, approximately 76.05% of the variance in Life Ladder scores is explained by the independent variables.
+
+
+The positive and negative affect are indicative of emotional and mental state of the general population. I would argue that those with a lower positive affect, and especially those with a higher negative affect, are countries which require improved conditions for a higher quality of life, and mental health resources. This type of information can be used for advocacy. 
+
+## Limitations
+
+It would be interesting to compare this data with that of another year. Comparing data across time and then correlating to important events in history can help to also determine what impacts happiness and how. It would also be useful to have more recent data, to keep the data relevant. Another limitation could be from the data collection method. The sample which was surveyed has to be an accurate reflection of the population, and that may or may not have been the case for every country. 
+
+## Conclusion
+
+To conclude, it looks like economic production is the most significant contributing factor to happiness. There is a reason people say that money buys happiness! This type of research, along with the analysis performed, can be used to improve quality of life all over the world. In the future, I would use this data set to compare what makes people the unhappiest, and work from there. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
