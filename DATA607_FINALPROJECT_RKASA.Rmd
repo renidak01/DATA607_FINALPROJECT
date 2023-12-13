@@ -1,6 +1,6 @@
 ---
 title: "DATA607 - Final Project - World Happiness Report"
-author:"Renida Kasa"
+author: "Renida Kasa"
 output: html_document
 date: "2023-12-05"
 ---
@@ -44,6 +44,7 @@ This alternative hypothesis suggests that there is a relationship between at lea
 ## Data Exploration
 ```{r}
 library(readr)
+library(ggplot2) 
 url1 <- "https://raw.githubusercontent.com/renidak01/DATA607_FINALPROJECT/main/world-happiness-report.csv"
 df1 <- read.csv(url1)
 cat("Variables in df1:\n") #df1 variables
@@ -363,10 +364,6 @@ It would be interesting to compare this data with that of another year. Comparin
 ## Conclusion
 
 To conclude, it looks like economic production is the most significant contributing factor to happiness. There is a reason people say that money buys happiness! This type of research, along with the analysis performed, can be used to improve quality of life all over the world. In the future, I would use this data set to compare what makes people the unhappiest, and work from there. 
-
-
-
-
 
 
 
